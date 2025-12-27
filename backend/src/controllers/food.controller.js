@@ -4,15 +4,33 @@ const { v4: uuid } = require("uuid");
 
 async function createFood(req, res) {
 
-    console.log(req.foodPartner);
+     if (!req.foodPartner) {
+        return res.status(401).json({ message: "Unauthorized food partner" });
+    }
 
-    console.log(req.body);
-    console.log(req.file);
+    if (!req.file) {
+        return res.status(400).json({ message: "Video file required" });
+    }
 
-    const fileUploadResult = await storageService.uploadFile(req.file.buffer, uuid())
-    console.log(fileUploadResult);
+    const fileUploadResult = await storageService.uploadFile(req.file.buffer, uuid(), req.file.mimetype);
 
-    res.send("Food created");
+       if (!fileUploadResult?.url) {
+        return res.status(500).json({
+            message: "File upload failed"
+        });
+    }
+
+    const foodItem = await foodModel.create({
+        name: req.body.name,
+        description: req.body.description,
+        video: fileUploadResult.url,
+        foodPartner: req.foodPartner._id
+    })
+
+    res.status(201).json({
+        message: "Food item created successfully",
+        food: foodItem
+    })
 }
 
 module.exports = {
