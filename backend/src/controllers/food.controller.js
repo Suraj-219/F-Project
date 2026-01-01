@@ -96,46 +96,57 @@ async function likeFood(req, res) {
     }
 }
 
-
 async function saveFood(req, res) {
-    // Implementation for saving food items goes here
-    const { foodId } = req.body;
-    const user = req.user;
+    try {
+        const { foodId } = req.body;
+        const userId = req.user._id;
 
-    const isAlreadySaved = await saveModel.findOne({
-        user: user._id,
-        food: foodId
-    })
+        if (!foodId) {
+            return res.status(400).json({ message: "foodId is required" });
+        }
 
-    if(!isAlreadySaved) {
-        await saveModel.deleteOne({
-            user: user._id,
+        const existingSave = await saveModel.findOne({
+            user: userId,
             food: foodId
-        })
+        });
+
+        // 👉 UNSAVE
+        if (existingSave) {
+            await saveModel.deleteOne({ _id: existingSave._id });
+
+            await foodModel.findByIdAndUpdate(foodId, {
+                $inc: { savesCount: -1 }
+            });
+
+            return res.status(200).json({
+                message: "Food unsaved",
+                save: false
+            });
+        }
+
+        // 👉 SAVE
+        await saveModel.create({
+            user: userId,
+            food: foodId
+        });
 
         await foodModel.findByIdAndUpdate(foodId, {
-            $inc: { savesCount: -1 }
-        })
+            $inc: { savesCount: 1 }
+        });
 
-        return res.status(200).json({
-            message: "Food unsaved",
-        })
+        return res.status(201).json({
+            message: "Food saved",
+            save: true
+        });
+
+    } catch (error) {
+        console.error("SAVE ERROR:", error);
+        return res.status(500).json({
+            message: "Internal server error"
+        });
     }
-
-    const save = await saveModel.create({
-        user: user._id,
-        food: foodId
-    })
-
-    await foodModel.findByIdAndUpdate(foodId, {
-        $inc: { savesCount: 1 }
-    })
-
-    res.status(201).json({
-        message: "Food saved",
-        save
-    })
 }
+
 
 async function getSavedFood(req, res) {
 
