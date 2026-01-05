@@ -105,7 +105,7 @@ POST   /api/auth/foodpartner/login
 GET    /api/auth/foodpartner/logout
 
 ### Food
-```http
+
 POST   /api/food              (Food Partner only)
 GET    /api/food              (User only)
 POST   /api/food/like         (User only)
@@ -113,7 +113,7 @@ POST   /api/food/save         (User only)
 GET    /api/food/save         (User only)
 
 ### Food Partner
-```http
+
 GET    /api/food-partner/:id  (User only)
 ```
 ---
